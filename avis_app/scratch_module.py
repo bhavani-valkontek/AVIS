@@ -212,7 +212,7 @@ def create_mask_overlay(original_img, masks, scores):
 
 # Streamlit UI
 def scratch_ui():
-    st.title("🚗 Vehicle Scratch Detection System")
+    st.title("🚗Vehicle Scratch Detection")
 
     uploaded_file = st.file_uploader("Upload vehicle image", type=["jpg", "jpeg", "png"])
 
