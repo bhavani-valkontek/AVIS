@@ -88,7 +88,7 @@ def upload_to_drive(filepath, filename, folder_id=None):
 # 🚀 Streamlit Web Application
 # ============================
 def dent_ui():
-    st.title("🔍 Dent Detection using YOLOv8")
+    st.title("🔍Vehicle Dent Detection")
     st.markdown("Upload an image or use your camera to detect car dents.")
 
     # Hugging Face model URL (📌 update this to your actual Hugging Face URL)
