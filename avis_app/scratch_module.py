@@ -108,7 +108,7 @@ def load_model():
     if not os.path.exists(model_path):
 
         try:
-            hf_token = ""  # 🔐 Replace with your real token or use secrets
+            hf_token = st.secrets["gcp_service_account"]["Apikey"]  # 🔐 Replace with your real token or use secrets
             headers = {"Authorization": f"Bearer {hf_token}"}
             response = requests.get(hf_url, headers=headers)
 
