@@ -15,9 +15,9 @@ import requests
 # =============================
 MODEL_URL = "https://huggingface.co/babbilibhavani/scartch_detection/resolve/main/best_crk.pt"
 DRIVE_FOLDER_ID = "1xqOTdWI3-9uhNr_tBV2fbDk4rqXP0O76"  # 🔁 Replace this with your actual Drive folder ID
-JSON_PATH = "../yolo_dent.json"
+JSON_PATH =st.secrets["gcp_service_account"]
 CONFIDENCE_DEFAULT = 0.3
-LOCAL_SAVE_DIR = "../run_detection"
+
 
 # =============================
 # AUTHENTICATE GOOGLE DRIVE
