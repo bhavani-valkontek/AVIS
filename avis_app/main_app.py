@@ -6,7 +6,7 @@ import streamlit as st
 # ===============================
 from scratch_module import scratch_ui
 from dent_module import dent_ui
-fromrust_module import rust_ui
+from rust_module import rust_ui
 
 # ===============================
 # Main Streamlit UI for Combined App
