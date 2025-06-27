@@ -4,9 +4,9 @@ import streamlit as st
 # ===============================
 # Import individual modules for each tab
 # ===============================
-from avis_app.scratch_module import scratch_ui
-from avis_app.dent_module import dent_ui
-from avis_app.rust_module import rust_ui
+from scratch_module import scratch_ui
+from dent_module import dent_ui
+fromrust_module import rust_ui
 
 # ===============================
 # Main Streamlit UI for Combined App
