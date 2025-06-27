@@ -34,7 +34,7 @@ def authenticate_drive(json_path):
 # =============================
 def rust_ui():
     st.set_page_config(page_title="🚘 Corrosion Detector", layout="centered")
-    st.title("🧠 Car Corrosion Detection")
+    st.title("🧠 Vehicle Corrosion Detection")
 
     uploaded_file = st.file_uploader("📷 Upload a Car Image", type=["jpg", "png", "jpeg"])
     confidence = st.slider("🎯 Confidence Threshold", value=CONFIDENCE_DEFAULT, step=0.05, min_value=0.1, max_value=1.0)
