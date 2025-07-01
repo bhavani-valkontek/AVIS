@@ -37,7 +37,7 @@ def corrosion_ui():
     st.title("🧠 Vehicle Corrosion Detection")
 
     uploaded_file = st.file_uploader("📷 Upload a Car Image", type=["jpg", "png", "jpeg"])
-    confidence = st.slider("🎯 Confidence Threshold", value=CONFIDENCE_DEFAULT, step=0.05, min_value=0.1, max_value=1.0)
+    confidence = st.slider("🎯 Confidence Threshold", value=CONFIDENCE_DEFAULT, step=0.05, min_value=0.05, max_value=1.0)
 
     if uploaded_file is not None:
         st.image(uploaded_file, caption="📷 Uploaded Image", use_container_width=True)
