@@ -9,15 +9,7 @@ from pydrive.drive import GoogleDrive
 from oauth2client.service_account import ServiceAccountCredentials
 import time
 import requests
-
-# =============================
-# CONFIGURATION
-# =============================
-MODEL_URL = "https://huggingface.co/babbilibhavani/scartch_detection/resolve/main/best_crk.pt"
-DRIVE_FOLDER_ID = "1xqOTdWI3-9uhNr_tBV2fbDk4rqXP0O76"  # 🔁 Replace this with your actual Drive folder ID
-JSON_PATH =st.secrets["GDRIVE_SERVICE_ACCOUNT"]
-CONFIDENCE_DEFAULT = 0.3
-
+import io
 
 # =============================
 # AUTHENTICATE GOOGLE DRIVE
@@ -26,8 +18,16 @@ CONFIDENCE_DEFAULT = 0.3
 def authenticate_drive(_json_path):
     gauth = GoogleAuth()
     scope = ['https://www.googleapis.com/auth/drive']
-    gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name(json_path, scope)
+    gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name(_json_path, scope)
     return GoogleDrive(gauth)
+
+# =============================
+# CONFIGURATION
+# =============================
+MODEL_URL = "https://huggingface.co/babbilibhavani/scartch_detection/resolve/main/best_crk.pt"
+DRIVE_FOLDER_ID = "1xqOTdWI3-9uhNr_tBV2fbDk4rqXP0O76"  # Replace with your folder ID
+JSON_PATH = st.secrets["GDRIVE_SERVICE_ACCOUNT"]
+CONFIDENCE_DEFAULT = 0.3
 
 # =============================
 # STREAMLIT UI
@@ -58,7 +58,7 @@ def corrosion_ui():
                     st.error("❌ Failed to download model from Hugging Face.")
                     st.stop()
 
-                # 🔄 Save uploaded file to temp directory
+                # 🔄 Save uploaded file temporarily for reading
                 temp_dir = tempfile.mkdtemp()
                 input_path = os.path.join(temp_dir, uploaded_file.name)
                 with open(input_path, "wb") as f:
@@ -80,33 +80,32 @@ def corrosion_ui():
                     cv2.rectangle(img, (xyxy[0], xyxy[1]), (xyxy[2], xyxy[3]), (0, 0, 255), 2)
                     cv2.putText(img, label, (xyxy[0], xyxy[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-                # # 💾 Save result locally to run_detection/
-                # os.makedirs(LOCAL_SAVE_DIR, exist_ok=True)
-                # result_filename = f"result_{uploaded_file.name}"
-                # result_path = os.path.join(LOCAL_SAVE_DIR, result_filename)
-                # cv2.imwrite(result_path, img)
-
-                # 📷 Show result
+                # 📷 Show result in Streamlit
                 st.image(img, caption="🧪 Detection Result", use_container_width=True)
 
-                # 🔐 Upload to Google Drive using folder ID
+                # 🧠 Convert image to in-memory buffer (JPEG)
+                is_success, buffer = cv2.imencode(".jpg", img)
+                byte_io = io.BytesIO(buffer)
+
+                # ☁️ Upload to Google Drive
+                result_name = f"corrosion_result_{int(time.time())}.jpg"
                 drive = authenticate_drive(JSON_PATH)
-                gfile = drive.CreateFile({'title': result_filename, 'parents': [{'id': DRIVE_FOLDER_ID}]})
-                gfile.SetContentFile(result_path)
+                gfile = drive.CreateFile({'title': result_name, 'parents': [{'id': DRIVE_FOLDER_ID}]})
+                byte_io.seek(0)
+                gfile.SetContentString(byte_io.read())
                 gfile.Upload()
 
                 elapsed = time.time() - start_time
-                st.success("✅ Detection complete and uploaded to your Drive folder.")
-                st.info(f"⏱️ Total Time: {elapsed:.2f} seconds")
+                st.success("✅ Detection complete and uploaded to Google Drive.")
+                st.info(f"⏱️ Time Taken: {elapsed:.2f} seconds")
 
                 # ⬇️ Download Button
-                with open(result_path, "rb") as f:
-                    st.download_button(
-                        label="⬇️ Download Result Image",
-                        data=f,
-                        file_name=result_filename,
-                        mime="image/jpeg"
-                    )
+                st.download_button(
+                    label="⬇️ Download Result Image",
+                    data=buffer.tobytes(),
+                    file_name=result_name,
+                    mime="image/jpeg"
+                )
 
 
 
