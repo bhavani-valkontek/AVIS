@@ -1,16 +1,15 @@
 import streamlit as st
 from ultralytics import YOLO
 import cv2
-import os
+import numpy as np
 import tempfile
-from PIL import Image
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
-from oauth2client.service_account import ServiceAccountCredentials
-import time
-import requests
-import io
 import json
+from PIL import Image
+import os
+import requests
+from oauth2client import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 
 # =============================
 # CONFIGURATION
@@ -20,94 +19,117 @@ DRIVE_FOLDER_ID = "1xqOTdWI3-9uhNr_tBV2fbDk4rqXP0O76"  # Replace with your actua
 CONFIDENCE_DEFAULT = 0.3
 
 # =============================
-# AUTHENTICATE GOOGLE DRIVE
+# Download model from Hugging Face
 # =============================
-@st.cache_resource
-def authenticate_drive(_secrets_dict):
-    gauth = GoogleAuth()
-    scope = ['https://www.googleapis.com/auth/drive']
-
-    # Save secrets to a temporary file
-    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False) as temp_json:
-        json.dump(_secrets_dict, temp_json)
-        temp_json_path = temp_json.name
-
-    gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name(temp_json_path, scope)
-    return GoogleDrive(gauth)
+def download_model_from_huggingface(url, save_path):
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(save_path, "wb") as f:
+            f.write(response.content)
+        return save_path
+    else:
+        raise Exception(f"Failed to download model from Hugging Face. Status code: {response.status_code}")
 
 # =============================
-# STREAMLIT UI
+# Run YOLO Inference
+# =============================
+def run_inference(image_path, model_path, conf_threshold):
+    model = YOLO(model_path)
+    results = model.predict(source=image_path, conf=conf_threshold, imgsz=640, save=False)
+    output = results[0]
+
+    image = cv2.imread(image_path)
+    image_draw = image.copy()
+    detection_data = []
+
+    if output.boxes is not None and len(output.boxes) > 0:
+        for box in output.boxes.data.tolist():
+            x1, y1, x2, y2, conf, cls = box
+            class_name = output.names[int(cls)]
+            cv2.rectangle(image_draw, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 255), 2)
+            label = f"{class_name}: {conf:.2f}"
+            cv2.putText(image_draw, label, (int(x1), int(y1)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
+            detection_data.append({
+                "class": class_name,
+                "confidence": float(f"{conf:.4f}"),
+                "bbox": [round(x1, 1), round(y1, 1), round(x2, 1), round(y2, 1)]
+            })
+    return image_draw, detection_data
+
+# =============================
+# Upload to Google Drive
+# =============================
+def upload_to_drive(filepath, filename, folder_id=None):
+    SCOPES = ['https://www.googleapis.com/auth/drive.file']
+    credentials_info = st.secrets["GDRIVE_SERVICE_ACCOUNT"]
+    creds = service_account.Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
+
+    service = build('drive', 'v3', credentials=creds)
+
+    file_metadata = {'name': filename}
+    if folder_id:
+        file_metadata['parents'] = [folder_id]
+
+    media = MediaFileUpload(filepath, mimetype='image/jpeg')
+    uploaded = service.files().create(
+        body=file_metadata,
+        media_body=media,
+        fields='id'
+    ).execute()
+
+    return uploaded.get('id')
+
+# =============================
+# Streamlit UI
 # =============================
 def corrosion_ui():
-    st.set_page_config(page_title="🚘 Corrosion Detector", layout="centered")
-    st.title("🧠 Car Corrosion Detection (YOLOv8 + Hugging Face + Google Drive)")
+    st.title("🚘 Vehicle Corrosion Detection")
+    st.markdown("Upload a vehicle image to detect corrosion using YOLOv8 model.")
 
-    uploaded_file = st.file_uploader("📷 Upload a Car Image", type=["jpg", "png", "jpeg"])
-    confidence = st.slider("🎯 Confidence Threshold", value=CONFIDENCE_DEFAULT, step=0.05, min_value=0.1, max_value=1.0)
+    # Download model
+    with st.spinner("📦 Downloading model from Hugging Face..."):
+        try:
+            model_path = download_model_from_huggingface(MODEL_URL, "best_crk.pt")
+        except Exception as e:
+            st.error(f"❌ Failed to download model: {e}")
+            st.stop()
 
-    if uploaded_file is not None:
-        st.image(uploaded_file, caption="📷 Uploaded Image", use_container_width=True)
+    image_file = st.file_uploader("📷 Upload an Image", type=["jpg", "jpeg", "png"])
+    conf_threshold = st.slider("🎯 Confidence Threshold", 0.05, 1.0, CONFIDENCE_DEFAULT, 0.05)
 
-        if st.button("🚀 Run Detection"):
-            with st.spinner("Downloading model & running corrosion detection..."):
-                start_time = time.time()
+    if image_file is not None:
+        input_image = Image.open(image_file).convert("RGB")
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_img:
+            input_image.save(tmp_img.name)
+            image_path = tmp_img.name
 
-                # 🔽 Download YOLOv8 model from Hugging Face
-                model_dir = tempfile.mkdtemp()
-                model_path = os.path.join(model_dir, "best_crk.pt")
+        with st.spinner("⏳ Running Corrosion Detection..."):
+            output_image, detections = run_inference(image_path, model_path, conf_threshold)
 
-                response = requests.get(MODEL_URL)
-                if response.status_code == 200:
-                    with open(model_path, "wb") as f:
-                        f.write(response.content)
-                else:
-                    st.error("❌ Failed to download model from Hugging Face.")
-                    st.stop()
+            st.image(output_image, caption="🧪 Detection Result", channels="BGR", use_container_width=True)
 
-                # 🔄 Save uploaded file to temp directory
-                temp_dir = tempfile.mkdtemp()
-                input_path = os.path.join(temp_dir, uploaded_file.name)
-                with open(input_path, "wb") as f:
-                    f.write(uploaded_file.getvalue())
+            # Save output image for upload
+            output_path = "corrosion_detection_output.jpg"
+            cv2.imwrite(output_path, output_image)
 
-                # 🧠 Load model
-                model = YOLO(model_path)
+            if detections:
+                json_path = "corrosion_results.json"
+                with open(json_path, "w") as f:
+                    json.dump(detections, f, indent=2)
 
-                # 🔍 Run inference
-                results = model.predict(input_path, conf=confidence)
-                boxes = results[0].boxes
+                st.download_button("⬇️ Download Results (JSON)", data=json.dumps(detections, indent=2),
+                                   file_name="corrosion_results.json", mime="application/json")
+                with open(output_path, "rb") as img_file:
+                    st.download_button("⬇️ Download Output Image", img_file.read(),
+                                       file_name="corrosion_detection_output.jpg", mime="image/jpeg")
 
-                # 🖼️ Draw results
-                img = cv2.imread(input_path)
-                for box in boxes:
-                    xyxy = box.xyxy[0].cpu().numpy().astype(int)
-                    conf = box.conf[0].item()
-                    label = f"corrosion {conf:.2f}"
-                    cv2.rectangle(img, (xyxy[0], xyxy[1]), (xyxy[2], xyxy[3]), (0, 0, 255), 2)
-                    cv2.putText(img, label, (xyxy[0], xyxy[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                try:
+                    file_id = upload_to_drive(output_path, "corrosion_detection_output.jpg", DRIVE_FOLDER_ID)
+                    st.success("✅ Output image uploaded to Google Drive.")
+                except Exception as e:
+                    st.error(f"❌ Failed to upload to Google Drive: {e}")
+            else:
+                st.warning("❌ No corrosion detected in the image.")
 
-                # 📷 Show result
-                st.image(img, caption="🧪 Detection Result", use_container_width=True)
 
-                # Convert image to memory (JPEG)
-                is_success, encoded_img = cv2.imencode('.jpg', img)
-                result_bytes = encoded_img.tobytes()
-                result_filename = f"corrosion_result_{int(time.time())}.jpg"
-
-                # 🔐 Upload to Google Drive
-                drive = authenticate_drive(st.secrets["GDRIVE_SERVICE_ACCOUNT"])
-                gfile = drive.CreateFile({'title': result_filename, 'parents': [{'id': DRIVE_FOLDER_ID}]})
-                gfile.SetContentString(result_bytes)
-                gfile.Upload()
-
-                elapsed = time.time() - start_time
-                st.success("✅ Detection complete and uploaded to your Drive folder.")
-                st.info(f"⏱️ Total Time: {elapsed:.2f} seconds")
-
-                # ⬇️ Download Button
-                st.download_button(
-                    label="⬇️ Download Result Image",
-                    data=result_bytes,
-                    file_name=result_filename,
-                    mime="image/jpeg"
-                )
