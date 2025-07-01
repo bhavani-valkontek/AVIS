@@ -7,7 +7,7 @@ import json
 from PIL import Image
 import os
 import requests
-from oauth2client import service_account
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
