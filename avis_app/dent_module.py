@@ -1,9 +1,8 @@
-
 # dent_module.py
-from distutils.command.build import build
 
 import streamlit as st
 from googleapiclient.http import MediaFileUpload
+from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from ultralytics import YOLO
 import cv2
@@ -13,9 +12,6 @@ import json
 from PIL import Image
 import os
 import requests
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
-from oauth2client.service_account import ServiceAccountCredentials
 
 # ===============================
 # 🎯 Download model from Hugging Face
@@ -61,12 +57,8 @@ def run_inference(image_path, model_path, conf_threshold):
 # ====================================
 # ☁️ Upload File to Google Drive API using Service Account
 # ====================================
-# ☁️ Upload File to Google Drive (Service Account)
-# ====================================
 def upload_to_drive(filepath, filename, folder_id=None):
     SCOPES = ['https://www.googleapis.com/auth/drive.file']
-
-    # ✅ Load credentials from Streamlit secrets
     credentials_info = st.secrets["GDRIVE_SERVICE_ACCOUNT"]
     creds = service_account.Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
 
@@ -92,29 +84,21 @@ def dent_ui():
     st.title("🔍Vehicle Dent Detection")
     st.markdown("Upload an image or use your camera to detect car dents.")
 
-    # Hugging Face model URL (📌 update this to your actual Hugging Face URL)
     hf_model_url = "https://huggingface.co/babbilibhavani/scartch_detection/resolve/main/best_model.pt"
 
-    # Load model once
     with st.spinner("📦 Downloading model from Hugging Face..."):
         try:
-            model_file = download_model_from_huggingface(hf_model_url, "../best_model.pt")
+            model_file = download_model_from_huggingface(hf_model_url, "best_model.pt")
         except Exception as e:
             st.error(f"❌ Failed to download model: {e}")
             st.stop()
 
-    # Upload image or capture
     image_file = st.file_uploader("🖼️ Upload Image", type=["jpg", "jpeg", "png"])
-    # camera_image = st.camera_input("📷 Or take a photo")
     conf_threshold = st.slider("🎯 Confidence Threshold", 0.05, 1.0, 0.25, 0.05)
 
-    final_image = None
     if image_file is not None:
         final_image = Image.open(image_file).convert("RGB")
-    # elif camera_image is not None:
-    #     final_image = Image.open(camera_image).convert("RGB")
 
-    if final_image:
         with st.spinner("⏳ Running Detection..."):
             with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_img:
                 final_image.save(tmp_img.name)
@@ -123,36 +107,27 @@ def dent_ui():
             output_image, detections = run_inference(tmp_img_path, model_file, conf_threshold)
             st.subheader("📊 Detection Results")
 
-            # Show image
             st.image(output_image, caption="🖼️ Detected Image", channels="BGR", use_container_width=True)
 
-            # Save output image
             output_image_path = "dent_detection_output.jpg"
             cv2.imwrite(output_image_path, output_image)
 
             if detections:
-                # ✅ Save JSON
                 json_path = "detection_results.json"
                 with open(json_path, "w") as f:
                     json.dump(detections, f, indent=2)
 
-                # 💾 Download buttons
                 st.download_button("⬇️ Download Results (JSON)", data=json.dumps(detections, indent=2),
                                    file_name="detection_results.json", mime="application/json")
                 with open(output_image_path, "rb") as img_file:
                     st.download_button("⬇️ Download Output Image", img_file.read(),
                                        file_name="dent_detection_output.jpg", mime="image/jpeg")
 
-                # ☁️ Upload to Google Drive
                 try:
-                    folder_id = "12fhgEhNBRxx560dmBLpB64fbQJ3-lqWd"  # Replace with your actual folder ID
+                    folder_id = "12fhgEhNBRxx560dmBLpB64fbQJ3-lqWd"
                     drive_file_id = upload_to_drive(output_image_path, "dent_detection_output.jpg", folder_id)
                     st.success(f"✅ Output image uploaded to Google Drive.")
                 except Exception as e:
                     st.error(f"❌ Failed to upload to Google Drive: {e}")
             else:
                 st.warning("❌ No dents detected in the image.")
-
-
-
-
