@@ -1,9 +1,4 @@
-# dent_module.py
-from distutils.command.build import build
-
 import streamlit as st
-from googleapiclient.http import MediaFileUpload
-from oauth2client import service_account
 from ultralytics import YOLO
 import cv2
 import numpy as np
@@ -12,13 +7,20 @@ import json
 from PIL import Image
 import os
 import requests
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
-from oauth2client.service_account import ServiceAccountCredentials
+from oauth2client import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 
-# ===============================
-# 🎯 Download model from Hugging Face
-# ===============================
+# =============================
+# CONFIGURATION
+# =============================
+MODEL_URL = "https://huggingface.co/babbilibhavani/scartch_detection/resolve/main/best_crk.pt"
+DRIVE_FOLDER_ID = "1xqOTdWI3-9uhNr_tBV2fbDk4rqXP0O76"  # Replace with your actual Drive folder ID
+CONFIDENCE_DEFAULT = 0.3
+
+# =============================
+# Download model from Hugging Face
+# =============================
 def download_model_from_huggingface(url, save_path):
     response = requests.get(url)
     if response.status_code == 200:
@@ -28,9 +30,9 @@ def download_model_from_huggingface(url, save_path):
     else:
         raise Exception(f"Failed to download model from Hugging Face. Status code: {response.status_code}")
 
-# ===============================
-# 🎯 Function: Run YOLO Inference
-# ===============================
+# =============================
+# Run YOLO Inference
+# =============================
 def run_inference(image_path, model_path, conf_threshold):
     model = YOLO(model_path)
     results = model.predict(source=image_path, conf=conf_threshold, imgsz=640, save=False)
@@ -44,11 +46,9 @@ def run_inference(image_path, model_path, conf_threshold):
         for box in output.boxes.data.tolist():
             x1, y1, x2, y2, conf, cls = box
             class_name = output.names[int(cls)]
-
-            # Draw bounding box
-            cv2.rectangle(image_draw, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+            cv2.rectangle(image_draw, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 255), 2)
             label = f"{class_name}: {conf:.2f}"
-            cv2.putText(image_draw, label, (int(x1), int(y1)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+            cv2.putText(image_draw, label, (int(x1), int(y1)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
             detection_data.append({
                 "class": class_name,
@@ -57,15 +57,11 @@ def run_inference(image_path, model_path, conf_threshold):
             })
     return image_draw, detection_data
 
-# ====================================
-# ☁️ Upload File to Google Drive API using Service Account
-# ====================================
-# ☁️ Upload File to Google Drive (Service Account)
-# ====================================
+# =============================
+# Upload to Google Drive
+# =============================
 def upload_to_drive(filepath, filename, folder_id=None):
     SCOPES = ['https://www.googleapis.com/auth/drive.file']
-
-    # ✅ Load credentials from Streamlit secrets
     credentials_info = st.secrets["GDRIVE_SERVICE_ACCOUNT"]
     creds = service_account.Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
 
@@ -84,70 +80,55 @@ def upload_to_drive(filepath, filename, folder_id=None):
 
     return uploaded.get('id')
 
-# ============================
-# 🚀 Streamlit Web Application
-# ============================
-def dent_ui():
-    st.title("🔍Vehicle Dent Detection")
-    st.markdown("Upload an image or use your camera to detect car dents.")
+# =============================
+# Streamlit UI
+# =============================
+def corrosion_ui():
+    st.title("🚘 Vehicle Corrosion Detection")
+    st.markdown("Upload a vehicle image to detect corrosion using YOLOv8 model.")
 
-    # Hugging Face model URL (📌 update this to your actual Hugging Face URL)
-    hf_model_url = "https://huggingface.co/babbilibhavani/scartch_detection/resolve/main/best_model.pt"
-
-    # Load model once
+    # Download model
     with st.spinner("📦 Downloading model from Hugging Face..."):
         try:
-            model_file = download_model_from_huggingface(hf_model_url, "../best_model.pt")
+            model_path = download_model_from_huggingface(MODEL_URL, "best_crk.pt")
         except Exception as e:
             st.error(f"❌ Failed to download model: {e}")
             st.stop()
 
-    # Upload image or capture
-    image_file = st.file_uploader("🖼️ Upload Image", type=["jpg", "jpeg", "png"])
-    # camera_image = st.camera_input("📷 Or take a photo")
-    conf_threshold = st.slider("🎯 Confidence Threshold", 0.05, 1.0, 0.25, 0.05)
+    image_file = st.file_uploader("📷 Upload an Image", type=["jpg", "jpeg", "png"])
+    conf_threshold = st.slider("🎯 Confidence Threshold", 0.05, 1.0, CONFIDENCE_DEFAULT, 0.05)
 
-    final_image = None
     if image_file is not None:
-        final_image = Image.open(image_file).convert("RGB")
-    # elif camera_image is not None:
-    #     final_image = Image.open(camera_image).convert("RGB")
+        input_image = Image.open(image_file).convert("RGB")
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_img:
+            input_image.save(tmp_img.name)
+            image_path = tmp_img.name
 
-    if final_image:
-        with st.spinner("⏳ Running Detection..."):
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_img:
-                final_image.save(tmp_img.name)
-                tmp_img_path = tmp_img.name
+        with st.spinner("⏳ Running Corrosion Detection..."):
+            output_image, detections = run_inference(image_path, model_path, conf_threshold)
 
-            output_image, detections = run_inference(tmp_img_path, model_file, conf_threshold)
-            st.subheader("📊 Detection Results")
+            st.image(output_image, caption="🧪 Detection Result", channels="BGR", use_container_width=True)
 
-            # Show image
-            st.image(output_image, caption="🖼️ Detected Image", channels="BGR", use_container_width=True)
-
-            # Save output image
-            output_image_path = "dent_detection_output.jpg"
-            cv2.imwrite(output_image_path, output_image)
+            # Save output image for upload
+            output_path = "corrosion_detection_output.jpg"
+            cv2.imwrite(output_path, output_image)
 
             if detections:
-                # ✅ Save JSON
-                json_path = "detection_results.json"
+                json_path = "corrosion_results.json"
                 with open(json_path, "w") as f:
                     json.dump(detections, f, indent=2)
 
-                # 💾 Download buttons
                 st.download_button("⬇️ Download Results (JSON)", data=json.dumps(detections, indent=2),
-                                   file_name="detection_results.json", mime="application/json")
-                with open(output_image_path, "rb") as img_file:
+                                   file_name="corrosion_results.json", mime="application/json")
+                with open(output_path, "rb") as img_file:
                     st.download_button("⬇️ Download Output Image", img_file.read(),
-                                       file_name="dent_detection_output.jpg", mime="image/jpeg")
+                                       file_name="corrosion_detection_output.jpg", mime="image/jpeg")
 
-                # ☁️ Upload to Google Drive
                 try:
-                    folder_id = "12fhgEhNBRxx560dmBLpB64fbQJ3-lqWd"  # Replace with your actual folder ID
-                    drive_file_id = upload_to_drive(output_image_path, "dent_detection_output.jpg", folder_id)
-                    st.success(f"✅ Output image uploaded to Google Drive.")
+                    file_id = upload_to_drive(output_path, "corrosion_detection_output.jpg", DRIVE_FOLDER_ID)
+                    st.success("✅ Output image uploaded to Google Drive.")
                 except Exception as e:
                     st.error(f"❌ Failed to upload to Google Drive: {e}")
             else:
-                st.warning("❌ No dents detected in the image.")
+                st.warning("❌ No corrosion detected in the image.")
+
