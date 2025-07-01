@@ -1,39 +1,65 @@
 # app.py
 import streamlit as st
+from PIL import Image
 
 # ===============================
-# Import individual modules for each tab
+# Import modules for each tab
 # ===============================
 from scratch_module import scratch_ui
 from dent_module import dent_ui
-from rust_module import rust_ui
+from corrosion_module import corrosion_ui
 
 # ===============================
-# Main Streamlit UI for Combined App
+# Streamlit Page Config
 # ===============================
-st.set_page_config(page_title="🚗 Automatic Vehicle Inspection System", layout="wide")
-st.title("🔧 Automatic Vehicle Inspection System")
-st.markdown("Use the tabs below to perform scratch, dent, or rust detection.")
+st.set_page_config(page_title="🚗 AVIS - Auto Vision Inspection System", layout="wide")
 
 # ===============================
-# Tabs for three types of inspection
+# 1️⃣ Logo + Developed By Header
 # ===============================
-tabs = st.tabs(["🩹 Scratch", "🕳️ Dent", "🛑 Rust"])
+col1, col2 = st.columns([1, 6])
+with col1:
+    try:
+        st.image("logo2.jpg", width=150,)
+    except:
+        st.warning("⚠️ Logo not found at 'logo2.jpg'")
+with col2:
+    st.markdown("""
+        <div style='padding-top: 10px;'>
+            <h2 style='margin-bottom: 5px;'>Valkontek Embedded IOT Services Private Limited</h2>
+            <h4>Automatic Vehicle Inspection System
+            </h4>
+        </div>
+    """, unsafe_allow_html=True)
 
 # ===============================
-# Scratch Tab
+# 2️⃣ App Title & Instructions
 # ===============================
+# st.markdown("---")
+# st.title("🔧 Automatic Vehicle Inspection System")
+# st.markdown("Use the tabs below to perform **Scratch**, **Dent**, or **Rust** detection from vehicle images.")
+
+# ===============================
+# 3️⃣ Tabs Section
+# ===============================
+tabs = st.tabs(["🩹 Scratch Detection", "🕳️ Dent Detection", "🛑 Corrosion Detection"])
+
 with tabs[0]:
     scratch_ui()
 
-# ===============================
-# Dent Tab
-# ===============================
 with tabs[1]:
     dent_ui()
 
-# ===============================
-# Rust Tab
-# ===============================
 with tabs[2]:
-    rust_ui()
+    corrosion_ui()
+
+# ===============================
+# 4️⃣ Footer Section
+# ===============================
+st.markdown("---")
+st.markdown("""
+    <div style='text-align: center; color: gray; font-size: 14px; padding: 10px;'>
+        © 2025 <b>Bunny AI Solutions</b>. All rights reserved.
+    </div>
+""", unsafe_allow_html=True)
+
