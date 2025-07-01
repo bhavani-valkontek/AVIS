@@ -80,14 +80,14 @@ def corrosion_ui():
                     cv2.rectangle(img, (xyxy[0], xyxy[1]), (xyxy[2], xyxy[3]), (0, 0, 255), 2)
                     cv2.putText(img, label, (xyxy[0], xyxy[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-                # 💾 Save result locally to run_detection/
-                os.makedirs(LOCAL_SAVE_DIR, exist_ok=True)
-                result_filename = f"result_{uploaded_file.name}"
-                result_path = os.path.join(LOCAL_SAVE_DIR, result_filename)
-                cv2.imwrite(result_path, img)
+                # # 💾 Save result locally to run_detection/
+                # os.makedirs(LOCAL_SAVE_DIR, exist_ok=True)
+                # result_filename = f"result_{uploaded_file.name}"
+                # result_path = os.path.join(LOCAL_SAVE_DIR, result_filename)
+                # cv2.imwrite(result_path, img)
 
                 # 📷 Show result
-                st.image(result_path, caption="🧪 Detection Result", use_container_width=True)
+                st.image(img, caption="🧪 Detection Result", use_container_width=True)
 
                 # 🔐 Upload to Google Drive using folder ID
                 drive = authenticate_drive(JSON_PATH)
