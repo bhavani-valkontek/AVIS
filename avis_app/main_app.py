@@ -59,7 +59,7 @@ with tabs[2]:
 st.markdown("---")
 st.markdown("""
     <div style='text-align: center; color: gray; font-size: 14px; padding: 10px;'>
-        © 2025 <b>Bunny AI Solutions</b>. All rights reserved.
+        © 2025 <b>Valkontek Embedded IOT Services Pvt Ltd</b>. All rights reserved.
     </div>
 """, unsafe_allow_html=True)
 
