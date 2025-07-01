@@ -23,7 +23,7 @@ CONFIDENCE_DEFAULT = 0.3
 # AUTHENTICATE GOOGLE DRIVE
 # =============================
 @st.cache_resource
-def authenticate_drive(json_path):
+def authenticate_drive(_json_path):
     gauth = GoogleAuth()
     scope = ['https://www.googleapis.com/auth/drive']
     gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name(json_path, scope)
