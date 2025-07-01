@@ -15,18 +15,26 @@ import io
 # AUTHENTICATE GOOGLE DRIVE
 # =============================
 @st.cache_resource
-def authenticate_drive(_json_path):
+def authenticate_drive(_secrets_dict):
     gauth = GoogleAuth()
     scope = ['https://www.googleapis.com/auth/drive']
-    gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name(_json_path, scope)
+
+    # ⏳ Save secrets to a temporary JSON file
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False) as temp_json:
+        import json
+        json.dump(_secrets_dict, temp_json)
+        temp_json_path = temp_json.name
+
+    gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name(temp_json_path, scope)
     return GoogleDrive(gauth)
+
 
 # =============================
 # CONFIGURATION
 # =============================
 MODEL_URL = "https://huggingface.co/babbilibhavani/scartch_detection/resolve/main/best_crk.pt"
 DRIVE_FOLDER_ID = "1xqOTdWI3-9uhNr_tBV2fbDk4rqXP0O76"  # Replace with your folder ID
-JSON_PATH = st.secrets["GDRIVE_SERVICE_ACCOUNT"]
+JSON_PATH =  authenticate_drive(st.secrets["GDRIVE_SERVICE_ACCOUNT"])
 CONFIDENCE_DEFAULT = 0.3
 
 # =============================
