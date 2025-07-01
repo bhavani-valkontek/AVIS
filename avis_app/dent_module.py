@@ -4,7 +4,7 @@ from distutils.command.build import build
 
 import streamlit as st
 from googleapiclient.http import MediaFileUpload
-from oauth2client import service_account
+from google.oauth2 import service_account
 from ultralytics import YOLO
 import cv2
 import numpy as np
