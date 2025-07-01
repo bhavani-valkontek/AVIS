@@ -32,7 +32,7 @@ def authenticate_drive(json_path):
 # =============================
 # STREAMLIT UI
 # =============================
-def rust_ui():
+def corrosion_ui():
     st.set_page_config(page_title="🚘 Corrosion Detector", layout="centered")
     st.title("🧠 Vehicle Corrosion Detection")
 
