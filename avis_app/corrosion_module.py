@@ -7,15 +7,11 @@ import json
 from PIL import Image
 import os
 import requests
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
 
 # =============================
 # CONFIGURATION
 # =============================
 MODEL_URL = "https://huggingface.co/babbilibhavani/scartch_detection/resolve/main/best_crk.pt"
-DRIVE_FOLDER_ID = "1xqOTdWI3-9uhNr_tBV2fbDk4rqXP0O76"  # Replace with your actual Drive folder ID
 CONFIDENCE_DEFAULT = 0.3
 
 # =============================
@@ -58,29 +54,6 @@ def run_inference(image_path, model_path, conf_threshold):
     return image_draw, detection_data
 
 # =============================
-# Upload to Google Drive
-# =============================
-def upload_to_drive(filepath, filename, folder_id=None):
-    SCOPES = ['https://www.googleapis.com/auth/drive.file']
-    credentials_info = st.secrets["GDRIVE_SERVICE_ACCOUNT"]
-    creds = service_account.Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
-
-    service = build('drive', 'v3', credentials=creds)
-
-    file_metadata = {'name': filename}
-    if folder_id:
-        file_metadata['parents'] = [folder_id]
-
-    media = MediaFileUpload(filepath, mimetype='image/jpeg')
-    uploaded = service.files().create(
-        body=file_metadata,
-        media_body=media,
-        fields='id'
-    ).execute()
-
-    return uploaded.get('id')
-
-# =============================
 # Streamlit UI
 # =============================
 def corrosion_ui():
@@ -109,7 +82,7 @@ def corrosion_ui():
 
             st.image(output_image, caption="🧪 Detection Result", channels="BGR", use_container_width=True)
 
-            # Save output image for upload
+            # Save output image for download
             output_path = "corrosion_detection_output.jpg"
             cv2.imwrite(output_path, output_image)
 
@@ -123,13 +96,5 @@ def corrosion_ui():
                 with open(output_path, "rb") as img_file:
                     st.download_button("⬇️ Download Output Image", img_file.read(),
                                        file_name="corrosion_detection_output.jpg", mime="image/jpeg")
-
-                try:
-                    file_id = upload_to_drive(output_path, "corrosion_detection_output.jpg", DRIVE_FOLDER_ID)
-                    st.success("✅ Output image uploaded to Google Drive.")
-                except Exception as e:
-                    st.error(f"❌ Failed to upload to Google Drive: {e}")
             else:
                 st.warning("❌ No corrosion detected in the image.")
-
-
