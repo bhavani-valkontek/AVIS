@@ -1,9 +1,6 @@
 # dent_module.py
 
 import streamlit as st
-from googleapiclient.http import MediaFileUpload
-from googleapiclient.discovery import build
-from google.oauth2 import service_account
 from ultralytics import YOLO
 import cv2
 import numpy as np
@@ -54,29 +51,6 @@ def run_inference(image_path, model_path, conf_threshold):
             })
     return image_draw, detection_data
 
-# ====================================
-# ☁️ Upload File to Google Drive API using Service Account
-# ====================================
-def upload_to_drive(filepath, filename, folder_id=None):
-    SCOPES = ['https://www.googleapis.com/auth/drive.file']
-    credentials_info = st.secrets["GDRIVE_SERVICE_ACCOUNT"]
-    creds = service_account.Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
-
-    service = build('drive', 'v3', credentials=creds)
-
-    file_metadata = {'name': filename}
-    if folder_id:
-        file_metadata['parents'] = [folder_id]
-
-    media = MediaFileUpload(filepath, mimetype='image/jpeg')
-    uploaded = service.files().create(
-        body=file_metadata,
-        media_body=media,
-        fields='id'
-    ).execute()
-
-    return uploaded.get('id')
-
 # ============================
 # 🚀 Streamlit Web Application
 # ============================
@@ -122,12 +96,5 @@ def dent_ui():
                 with open(output_image_path, "rb") as img_file:
                     st.download_button("⬇️ Download Output Image", img_file.read(),
                                        file_name="dent_detection_output.jpg", mime="image/jpeg")
-
-                try:
-                    folder_id = "12fhgEhNBRxx560dmBLpB64fbQJ3-lqWd"
-                    drive_file_id = upload_to_drive(output_image_path, "dent_detection_output.jpg", folder_id)
-                    st.success(f"✅ Output image uploaded to Google Drive.")
-                except Exception as e:
-                    st.error(f"❌ Failed to upload to Google Drive: {e}")
             else:
                 st.warning("❌ No dents detected in the image.")
