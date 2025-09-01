@@ -8,6 +8,7 @@ from PIL import Image
 from scratch_module import scratch_ui
 from dent_module import dent_ui
 from corrosion_module import corrosion_ui
+from glass_module import glass_ui
 
 # ===============================
 # Streamlit Page Config
@@ -42,7 +43,7 @@ with col2:
 # ===============================
 # 3️⃣ Tabs Section
 # ===============================
-tabs = st.tabs(["🩹 Scratch Detection", "🕳️ Dent Detection", "🛑 Corrosion Detection"])
+tabs = st.tabs(["🩹 Scratch Detection", "🕳️ Dent Detection", "🛑 Corrosion Detection","Glass Detection"])
 
 with tabs[0]:
     scratch_ui()
@@ -52,6 +53,8 @@ with tabs[1]:
 
 with tabs[2]:
     corrosion_ui()
+with tabs[3]:
+    glass_ui()
 
 # ===============================
 # 4️⃣ Footer Section
