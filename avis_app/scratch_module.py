@@ -83,14 +83,14 @@ def create_mask_overlay(original_img, masks, scores):
         cv2.rectangle(overlayed, (x1, y1), (x2, y2), (0, 255, 0), 3)
 
     severity = (total_pixels / (h * w)) * 100
-    confidence = np.mean(scores) * 100
+    # confidence = np.mean(scores) * 100
     font_scale = w / 1000
-    text = f"Severity: {severity:.1f}% | Confidence: {confidence:.1f}% "
+    text = f"Severity: {severity:.1f}% "  #| Confidence: {confidence:.1f}% 
     text1 = f"Mask Pixels: {total_pixels}"
     cv2.putText(overlayed, text, (10, 40), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 255, 0), 2)
     cv2.putText(overlayed, text1, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 255, 0), 2)
 
-    return Image.fromarray(mask_overlay), Image.fromarray(overlayed), severity, total_pixels, confidence
+    return Image.fromarray(mask_overlay), Image.fromarray(overlayed), severity, total_pixels # confidence
 
 def scratch_ui():
     st.title("🚗 Vehicle Scratch Detection")
