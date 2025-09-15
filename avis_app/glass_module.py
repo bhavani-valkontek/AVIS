@@ -25,9 +25,9 @@ def download_model_from_huggingface(url, save_path):
 # ===============================
 # 🎯 Function: Run YOLO Inference
 # ===============================
-def run_inference(image_path, model_path, conf_threshold):
+def run_inference(image_path, model_path): #, conf_threshold
     model = YOLO(model_path)
-    results = model.predict(source=image_path, conf=conf_threshold, imgsz=640, save=False)
+    results = model.predict(source=image_path,imgsz=640, save=False) # conf=conf_threshold, 
     output = results[0]
 
     image = cv2.imread(image_path)
@@ -50,7 +50,7 @@ def run_inference(image_path, model_path, conf_threshold):
 
             detection_data.append({
                 "class": class_name,
-                "confidence": float(f"{conf:.4f}"),
+                # "confidence": float(f"{conf:.4f}"),
                 "bbox": [round(x1, 1), round(y1, 1), round(x2, 1), round(y2, 1)]
             })
 
@@ -74,7 +74,7 @@ def glass_ui():
             st.stop()
 
     image_file = st.file_uploader("🖼️ Upload Image", type=["jpg", "jpeg", "png"],key="glass_upload")
-    conf_threshold = st.slider("🎯 Confidence Threshold", 0.05, 1.0, 0.25, 0.05,key="glas_conf_slider")
+    # conf_threshold = st.slider("🎯 Confidence Threshold", 0.05, 1.0, 0.25, 0.05,key="glas_conf_slider")
 
     if image_file is not None:
         final_image = Image.open(image_file).convert("RGB")
@@ -84,7 +84,7 @@ def glass_ui():
             final_image.save(input_image_path)
 
             try:
-                output_image, detections = run_inference(input_image_path, model_file, conf_threshold)
+                output_image, detections = run_inference(input_image_path, model_file) #, conf_threshold
             except Exception as e:
                 st.error(f"❌ Error during inference: {e}")
                 return
@@ -129,3 +129,4 @@ def glass_ui():
 # # ============================
 # if __name__ == "__main__":
 #     glass_ui()
+
