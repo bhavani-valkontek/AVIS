@@ -25,9 +25,9 @@ def download_model_from_huggingface(url, save_path):
 # ===============================
 # 🎯 Function: Run YOLO Inference
 # ===============================
-def run_inference(image_path, model_path, conf_threshold):
+def run_inference(image_path, model_path):  #conf_threshold
     model = YOLO(model_path)
-    results = model.predict(source=image_path, conf=conf_threshold, imgsz=640, save=False)
+    results = model.predict(source=image_path, imgsz=640, save=False) #conf=conf_threshold, 
     output = results[0]
 
     image = cv2.imread(image_path)
@@ -46,7 +46,7 @@ def run_inference(image_path, model_path, conf_threshold):
 
             detection_data.append({
                 "class": class_name,
-                "confidence": float(f"{conf:.4f}"),
+                # "confidence": float(f"{conf:.4f}"),
                 "bbox": [round(x1, 1), round(y1, 1), round(x2, 1), round(y2, 1)]
             })
     return image_draw, detection_data
@@ -68,7 +68,7 @@ def dent_ui():
             st.stop()
 
     image_file = st.file_uploader("🖼️ Upload Image", type=["jpg", "jpeg", "png"])
-    conf_threshold = st.slider("🎯 Confidence Threshold", 0.05, 1.0, 0.25, 0.05)
+    # conf_threshold = st.slider("🎯 Confidence Threshold", 0.05, 1.0, 0.25, 0.05)
 
     if image_file is not None:
         final_image = Image.open(image_file).convert("RGB")
@@ -78,7 +78,7 @@ def dent_ui():
                 final_image.save(tmp_img.name)
                 tmp_img_path = tmp_img.name
 
-            output_image, detections = run_inference(tmp_img_path, model_file, conf_threshold)
+            output_image, detections = run_inference(tmp_img_path, model_file) #conf_threshold
             st.subheader("📊 Detection Results")
 
             st.image(output_image, caption="🖼️ Detected Image", channels="BGR", use_container_width=True)
