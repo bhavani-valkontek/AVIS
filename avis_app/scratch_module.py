@@ -109,7 +109,7 @@ def scratch_ui():
                 detection_time = end_time - start_time
 
             if masks:
-                mask_img, overlay_img, severity, total_pixels, confidence = create_mask_overlay(original_np, masks, scores)
+                mask_img, overlay_img, severity, total_pixels  = create_mask_overlay(original_np, masks, scores) #confidence
                 st.subheader("Results:")
                 st.write(f"🕒 Detection Time: {detection_time:.2f} seconds")
                 col1, col2 = st.columns(2)
@@ -119,7 +119,7 @@ def scratch_ui():
                 st.subheader("Scratch Details")
                 st.write(f"Severity: {severity:.1f}%")
                 st.write(f"Pixels: {total_pixels}px")
-                st.write(f"Confidence: {confidence:.1f}%")
+                # st.write(f"Confidence: {confidence:.1f}%")
 
                 # Prepare download filenames
                 ist = timezone('Asia/Kolkata')
@@ -142,7 +142,7 @@ def scratch_ui():
                 result_data = pd.DataFrame([{
                     "filename": f"overlay_{timestamp}.jpg",
                     "severity": severity,
-                    "confidence": confidence,
+                    # "confidence": confidence,
                     "pixels": total_pixels,
                     "timestamp": datetime.now(ist).strftime("%Y-%m-%d %H:%M:%S")
                 }])
