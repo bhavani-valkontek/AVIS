@@ -43,7 +43,7 @@ with col2:
 # ===============================
 # 3️⃣ Tabs Section
 # ===============================
-tabs = st.tabs(["🩹 Scratch Detection", "🕳️ Dent Detection", "🛑 Corrosion Detection","Glass Detection"])
+tabs = st.tabs(["Scratch Detection", "Dent Detection", "Corrosion Detection","Glass Detection"])
 
 with tabs[0]:
     scratch_ui()
