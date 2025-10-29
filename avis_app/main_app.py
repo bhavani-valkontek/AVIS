@@ -9,6 +9,7 @@ from scratch_module import scratch_ui
 from dent_module import dent_ui
 from corrosion_module import corrosion_ui
 from glass_module import glass_ui
+from scratch_module2 import scratch2_ui
 
 # ===============================
 # Streamlit Page Config
@@ -47,13 +48,15 @@ tabs = st.tabs(["Scratch Detection", "Dent Detection", "Corrosion Detection","Gl
 
 with tabs[0]:
     scratch_ui()
-
 with tabs[1]:
-    dent_ui()
+    scratch2_ui()
 
 with tabs[2]:
-    corrosion_ui()
+    dent_ui()
+
 with tabs[3]:
+    corrosion_ui()
+with tabs[4]:
     glass_ui()
 
 # ===============================
