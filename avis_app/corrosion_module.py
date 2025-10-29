@@ -68,7 +68,7 @@ def corrosion_ui():
             st.error(f"❌ Failed to download model: {e}")
             st.stop()
 
-    image_file = st.file_uploader("📷 Upload an Image", type=["jpg", "jpeg", "png"])
+    image_file = st.file_uploader("📷 Upload an Image", type=["jpg", "jpeg", "png"],key="corrosion_image_uploader")
     # conf_threshold = st.slider("🎯 Confidence Threshold", 0.05, 1.0, CONFIDENCE_DEFAULT, 0.05)
 
     if image_file is not None:
