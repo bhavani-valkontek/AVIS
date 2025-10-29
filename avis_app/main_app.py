@@ -13,7 +13,7 @@ from glass_module import glass_ui
 # ===============================
 # Streamlit Page Config
 # ===============================
-st.set_page_config(page_title="🚗 AVIS - Auto Vision Inspection System", layout="wide")
+st.set_page_config(page_title="AVIS - Auto Vision Inspection System", layout="wide")
 
 # ===============================
 # 1️⃣ Logo + Developed By Header
