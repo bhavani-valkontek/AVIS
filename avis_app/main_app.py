@@ -47,17 +47,18 @@ with col2:
 tabs = st.tabs(["Scratch Detection", "Dent Detection", "Corrosion Detection","Glass Detection"])
 
 with tabs[0]:
-    scratch_ui()
+    scratch_ui(key_prefix="tab1_")
+
 with tabs[1]:
-    scratch2_ui()
+    scratch2_ui(key_prefix="tab2_")
 
 with tabs[2]:
-    dent_ui()
+    dent_ui(key_prefix="tab3_")
 
 with tabs[3]:
-    corrosion_ui()
+    corrosion_ui(key_prefix="tab4_")
 with tabs[4]:
-    glass_ui()
+    glass_ui(key_prefix="tab5_")
 
 # ===============================
 # 4️⃣ Footer Section
