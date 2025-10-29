@@ -54,7 +54,7 @@ def run_inference(image_path, model_path):  #conf_threshold
 # ============================
 # 🚀 Streamlit Web Application
 # ============================
-def dent_ui():
+def scratch2_ui():
     st.title("🔍Vehicle Dent Detection")
     st.markdown("Upload an image or use your camera to detect car dents.")
 
