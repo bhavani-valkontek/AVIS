@@ -94,7 +94,7 @@ def create_mask_overlay(original_img, masks, scores):
 
 def scratch_ui():
     st.title("🚗 Vehicle Scratch Detection")
-    uploaded_file = st.file_uploader("Upload vehicle image", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("Upload vehicle image", type=["jpg", "jpeg", "png"],key="scratch_image_uploader")
 
     if uploaded_file:
         image_data = uploaded_file.read()
