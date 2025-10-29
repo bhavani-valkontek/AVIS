@@ -73,7 +73,7 @@ def glass_ui():
             st.error(f"❌ Failed to download model: {e}")
             st.stop()
 
-    image_file = st.file_uploader("🖼️ Upload Image", type=["jpg", "jpeg", "png"],key="glass_upload")
+    image_file = st.file_uploader("🖼️ Upload Image", type=["jpg", "jpeg", "png"],key="glass_image_upload")
     # conf_threshold = st.slider("🎯 Confidence Threshold", 0.05, 1.0, 0.25, 0.05,key="glas_conf_slider")
 
     if image_file is not None:
@@ -129,4 +129,5 @@ def glass_ui():
 # # ============================
 # if __name__ == "__main__":
 #     glass_ui()
+
 
