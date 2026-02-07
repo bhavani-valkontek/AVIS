@@ -296,7 +296,7 @@ def scratch_ui():
     uploaded_file = st.file_uploader(
         "Upload vehicle image",
         type=["jpg", "jpeg", "png"],
-        key="scratch_image_uploader"
+        key="scratch_upload_tab"
     )
 
     if uploaded_file:
