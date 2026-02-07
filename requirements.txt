@@ -10,3 +10,4 @@ requests
 gdown
 oauth2client
 pydrive
+huggingface_hub
